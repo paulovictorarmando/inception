@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  mariadb:
+    # constrói imagem local a partir do nosso Dockerfile
+    build: ./srcs/requirements/mariadb
+
+    # nome da imagem (regra do projeto: igual ao serviço)
+    image: mariadb
+
+    # nome fixo do container (facilita debug/logs)
+    container_name: mariadb
+
+    # carrega variáveis do .env automaticamente
+    environment:
+      # MariaDB lê essas variáveis na primeira inicialização
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+    # persistência → banco não pode perder dados
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+    # só containers internos acessam o banco
+    # não expomos porta para o host (mais seguro)
+    networks:
+      - inception
+
+# volume nomeado gerenciado pelo docker
+volumes:
+  mariadb_data:
+
+# rede interna isolada para comunicação entre serviços
+networks:
+  inception:
