@@ -1,37 +1,85 @@
-version: "3.8"
-
 services:
   mariadb:
-    # constrói imagem local a partir do nosso Dockerfile
-    build: ./srcs/requirements/mariadb
-
-    # nome da imagem (regra do projeto: igual ao serviço)
+    build: ./mariadb
     image: mariadb
-
-    # nome fixo do container (facilita debug/logs)
     container_name: mariadb
-
-    # carrega variáveis do .env automaticamente
+    env_file: .env
     environment:
-      # MariaDB lê essas variáveis na primeira inicialização
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-
-    # persistência → banco não pode perder dados
+      DB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      DB_USER_PASSWORD_FILE: /run/secrets/db_user_password
     volumes:
       - mariadb_data:/var/lib/mysql
+    networks:
+      - inception
+    restart: always
+    secrets:
+      - db_root_password
+      - db_user_password
 
-    # só containers internos acessam o banco
-    # não expomos porta para o host (mais seguro)
+  wordpress:
+    container_name: wordpress
+    build: ./wordpress
+    image: wordpress
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception
+    depends_on:
+      - mariadb
+    restart: always
+    env_file: .env
+    environment:
+      DB_USER_PASSWORD_FILE: /run/secrets/db_user_password
+      WORDPRESS_ADMIN_PASSWORD_FILE: /run/secrets/wp_admin_password
+      WORDPRESS_USER_PASSWORD_FILE: /run/secrets/wp_user_password
+    secrets:
+    #  - db_root_password
+      - db_user_password
+      - wp_admin_password
+      - wp_user_password
+
+  nginx:
+    build: ./nginx
+    image: nginx
+    container_name: nginx
+    ports:
+      - "443:443"
+      - "80:80"
+      #"HOST_PORT:CONTAINER_PORT"
+    depends_on:
+      - wordpress
+    volumes:
+      - wordpress_data:/var/www/html
+    restart: always
     networks:
       - inception
 
-# volume nomeado gerenciado pelo docker
 volumes:
   mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/parmando/data/mariadb
+      o: bind
 
-# rede interna isolada para comunicação entre serviços
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/parmando/data/wordpress
+      o: bind
+
 networks:
   inception:
+    driver: bridge
+    name: inception
+
+secrets:
+  db_root_password:
+    file: ./secrets/db_root_password.txt
+  db_user_password:
+    file: ./secrets/db_user_password.txt
+  wp_admin_password:
+    file: ./secrets/wp_admin_password.txt
+  wp_user_password:
+    file: ./secrets/wp_user_password.txt

@@ -1,12 +1,27 @@
-# sobe tudo reconstruindo imagens
+COMPOSE = docker compose -f ./srcs/docker-compose.yml
+DATA = /home/parmando/data
+
+all: setup up
+
+setup:
+	@mkdir -p $(DATA)/wordpress
+	@mkdir -p $(DATA)/mariadb
+	@chmod 755 $(DATA)/wordpress
+	@chmod 755 $(DATA)/mariadb
+
+build:
+	@$(COMPOSE) build
+
 up:
-	docker compose up --build
+	@$(COMPOSE) up -d --build
 
-# para containers
 down:
-	docker compose down
+	@$(COMPOSE) down
 
-# limpa absolutamente tudo (volumes + imagens)
-# útil quando quer resetar banco do zero
 clean:
-	docker compose down -v --rmi all --remove-orphans
+	@$(COMPOSE) down -v --rmi all --remove-orphans
+
+fclean: clean
+	@rm -rf $(DATA)
+
+re: fclean all

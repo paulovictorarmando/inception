@@ -1,26 +1,34 @@
-# Imagem base estável (evite latest → builds imprevisíveis)
-FROM debian:bullseye
-
-# Instala apenas o necessário para rodar o banco
-# --no-install-recommends evita lixo extra
-RUN apt-get update && apt-get install -y \
-    mariadb-server \
-    && rm -rf /var/lib/apt/lists/*
-
-# Substitui config padrão do MySQL/MariaDB
-# Precisamos controlar bind-address manualmente
-COPY conf/my.cnf /etc/mysql/my.cnf
-
-# Script responsável por inicializar o banco automaticamente
-# Containers não podem depender de configuração manual
+FROM debian:bookworm
+RUN apt-get update && \
+    apt-get install -y mariadb-server && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /var/lib/mysql /var/run/mysqld && \
+    chmod 777 /var/lib/mysql /run/mysqld
 COPY tools/setup.sh /setup.sh
-
-# Permissão obrigatória para executar
 RUN chmod +x /setup.sh
-
-# Documentação apenas (não publica porta sozinho)
 EXPOSE 3306
-
-# Container inicia rodando nosso script
-# Ele cria DB, usuário e depois inicia o servidor
 ENTRYPOINT ["/setup.sh"]
+
+
+#docker tem dois times
+# Build time: docker build
+# runtime: docker run
+# build: construção da imagem, instalação de dependências, configuração do ambiente
+# runtime: execução do container, inicialização do serviço, monitoramento do processo
+
+
+#Dockerfile:
+    #👉 prepara a imagem “sem volume”
+
+#setup.sh:
+    #👉 corrige tudo que o volume pode estragar
+
+#   docker build -t mariadb-custom
+#lê o Dockerfile
+#executa cada RUN
+#cria a imagem final
+
+#   docker images
+#Ver imagens:
+
+#   docker ps - Ver se o container está rodando
