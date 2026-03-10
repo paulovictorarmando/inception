@@ -1,13 +1,14 @@
 COMPOSE = docker compose -f ./srcs/docker-compose.yml
 DATA = /home/parmando/data
+DATA_TEST = /home/paulo-armando/data
 
 all: setup up
 
 setup:
-	@mkdir -p $(DATA)/wordpress
-	@mkdir -p $(DATA)/mariadb
-	@chmod 755 $(DATA)/wordpress
-	@chmod 755 $(DATA)/mariadb
+	@mkdir -p $(DATA_TEST)/wordpress
+	@mkdir -p $(DATA_TEST)/mariadb
+	@chmod 755 $(DATA_TEST)/wordpress
+	@chmod 755 $(DATA_TEST)/mariadb
 
 build:
 	@$(COMPOSE) build
@@ -22,6 +23,6 @@ clean:
 	@$(COMPOSE) down -v --rmi all --remove-orphans
 
 fclean: clean
-	@rm -rf $(DATA)
+	@sudo rm -rf $(DATA_TEST)
 
 re: fclean all

@@ -59,14 +59,16 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/parmando/data/mariadb
+      #device: /home/parmando/data/mariadb
+      device: /home/paulo-armando/data/mariadb
       o: bind
 
   wordpress_data:
     driver: local
     driver_opts:
       type: none
-      device: /home/parmando/data/wordpress
+      #device: /home/parmando/data/wordpress
+      device: /home/paulo-armando/data/wordpress
       o: bind
 
 networks:

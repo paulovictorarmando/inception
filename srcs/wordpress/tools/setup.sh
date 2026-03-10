@@ -12,9 +12,9 @@ WORDPRESS_USER_PASSWORD=$(cat "$WORDPRESS_USER_PASSWORD_FILE")
 # Validar variáveis obrigatórias
 # ================================
 : "${WORDPRESS_DB_HOST:?Variável WORDPRESS_DB_HOST não setada}"
-: "${WORDPRESS_DB_NAME:?Variável WORDPRESS_DB_NAME não setada}"
-: "${WORDPRESS_DB_USER:?Variável WORDPRESS_DB_USER não setada}"
-: "${WORDPRESS_DB_PASSWORD:?Variável WORDPRESS_DB_PASSWORD não setada}"
+: "${MYSQL_DATABASE:?Variável MYSQL_DATABASE não setada}"
+: "${MYSQL_USER:?Variável MYSQL_USER não setada}"
+: "${DB_USER_PASSWORD:?Variável DB_USER_PASSWORD não setada}"
 : "${WP_ADMIN_USER:?Variável WP_ADMIN_USER não setada}"
 : "${WP_ADMIN_EMAIL:?Variável WP_ADMIN_EMAIL não setada}"
 : "${WP_USER:?Variável WP_USER não setada}"
@@ -30,7 +30,7 @@ chmod -R 755 /var/www/html
 # Esperar o MariaDB estar pronto
 # ================================
 echo "⏳ Aguardando MariaDB..."
-until mysqladmin ping -h"$WORDPRESS_DB_HOST" -u"$WORDPRESS_DB_USER" -p"$DB_USER_PASSWORD" --silent; do
+until mysqladmin ping -h"$WORDPRESS_DB_HOST" -u"$MYSQL_USER" -p"$DB_USER_PASSWORD" --silent; do
   sleep 2
 done
 echo "✅ MariaDB pronto!"
@@ -41,8 +41,8 @@ echo "✅ MariaDB pronto!"
 if [ ! -f /var/www/html/wp-config.php ]; then
     cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
 
-    sed -i "s/database_name_here/${WORDPRESS_DB_NAME}/" /var/www/html/wp-config.php
-    sed -i "s/username_here/${WORDPRESS_DB_USER}/" /var/www/html/wp-config.php
+    sed -i "s/database_name_here/${MYSQL_DATABASE}/" /var/www/html/wp-config.php
+    sed -i "s/username_here/${MYSQL_USER}/" /var/www/html/wp-config.php
     sed -i "s/password_here/${DB_USER_PASSWORD}/" /var/www/html/wp-config.php
     sed -i "s/localhost/${WORDPRESS_DB_HOST}/" /var/www/html/wp-config.php
 
@@ -62,14 +62,15 @@ fi
 # ================================
 # Instalar WordPress Core se não estiver instalado
 # ================================
-wp core is-installed --allow-root || \
-wp core install \
-    --url="http://localhost" \
-    --title="Inception WP" \
-    --admin_user="$WP_ADMIN_USER" \
-    --admin_password="$WORDPRESS_ADMIN_PASSWORD" \
-    --admin_email="$WP_ADMIN_EMAIL" \
-    --allow-root
+if ! wp core is-installed --allow-root; then
+    wp core install \
+        --url="http://parmando.42.fr" \
+        --title="Inception WP" \
+        --admin_user="$WP_ADMIN_USER" \
+        --admin_password="$WORDPRESS_ADMIN_PASSWORD" \
+        --admin_email="$WP_ADMIN_EMAIL" \
+        --allow-root
+fi
 
 # ================================
 #  Criar usuários se não existirem
