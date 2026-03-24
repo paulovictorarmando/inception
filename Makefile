@@ -1,28 +1,36 @@
-COMPOSE = docker compose -f ./srcs/docker-compose.yml
-DATA = /home/parmando/data
-DATA_TEST = /home/paulo-armando/data
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: parmando <marvin@42.fr>                    +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2026/02/13 08:41:26 by parmando          #+#    #+#              #
+#    Updated: 2026/02/13 09:46:58 by parmando         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
-all: setup up
+LOGIN = parmando
 
-setup:
-	@mkdir -p $(DATA_TEST)/wordpress
-	@mkdir -p $(DATA_TEST)/mariadb
-	@chmod 755 $(DATA_TEST)/wordpress
-	@chmod 755 $(DATA_TEST)/mariadb
+all: build up
 
 build:
-	@$(COMPOSE) build
+	@sudo mkdir -p /home/$(LOGIN)/data/mariadb
+	@sudo mkdir -p /home/$(LOGIN)/data/wordpress
+	@sudo chown -R $(USER):$(USER) /home/$(LOGIN)/data
+	docker compose -f srcs/docker-compose.yml build
 
 up:
-	@$(COMPOSE) up -d --build
+	docker compose -f srcs/docker-compose.yml up -d
 
 down:
-	@$(COMPOSE) down
+	docker compose -f srcs/docker-compose.yml down
 
-clean:
-	@$(COMPOSE) down -v --rmi all --remove-orphans
+clean: down
+	docker system prune -a
 
 fclean: clean
-	@sudo rm -rf $(DATA_TEST)
+	@docker volume ls -q | xargs -r docker volume rm
+	sudo rm -rf /home/$(LOGIN)/data
 
 re: fclean all
